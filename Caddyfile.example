@@ -1,0 +1,72 @@
+# Caddyfile example for caddy-x402pay module
+#
+# This example demonstrates how to configure both the X402FacilitatorApp
+# and X402SellerMiddleware using Caddyfile syntax.
+
+# Global Options Block
+{
+	# X402 Facilitator App Configuration
+	# Provides the PaymentFacilitator instance for payment verification and settlement
+	x402.facilitator {
+		# export X402_FACILITATOR_PRIVATE_KEY=ac0978bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
+		private_key {$X402_FACILITATOR_PRIVATE_KEY}
+		supported_schemes exact
+		gas_limit 21000
+		gas_price 10
+
+		chain_network localhost {
+			rpc http://127.0.0.1:8545
+			id 1337
+			token_address 0xBA32c2Ee180e743cCe34CbbC86cb79278C116CEb
+			token_name MyToken
+			token_version 1
+			token_decimals 6
+			token_type ERC20
+		}
+	}
+
+	# Log Configuration
+	log {
+		level DEBUG
+	}
+}
+
+# HTTP Server Configuration
+:8080 {
+	# Route 1: Premium data API with payment requirement
+	# Requires payment of 1,000,000 tokens (with 6 decimals = 1 token)
+	route /api/premium-data {
+		x402seller {
+			scheme exact
+			network localhost
+			resource premium-data-api
+			description "Access to premium market data"
+			max_amount_required 1000000
+			pay_to 0x93866dBB587db8b9f2C36570Ae083E3F9814e508
+		}
+
+		# Forward to backend service after successful payment
+		reverse_proxy localhost:5002
+	}
+
+	# Route 2: Protected resource with different pricing
+	# Requires payment of 500,000 tokens
+	route /api/protected-resource {
+		x402seller {
+			scheme exact
+			network localhost
+			resource protected-resource
+			description "Protected API resource"
+			max_amount_required 500000
+			pay_to 0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb
+		}
+
+		# Return success response after payment
+		respond "Access granted! You have successfully paid for this resource." 200
+	}
+
+	# Route 3: Public endpoint (no payment required)
+	route /api/public {
+		respond "This endpoint is free to access!"
+	}
+}

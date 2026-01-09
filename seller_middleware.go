@@ -7,6 +7,7 @@ import (
 
 	"github.com/agent-guide/go-x402-facilitator/pkg/types"
 	"github.com/caddyserver/caddy/v2"
+	"github.com/caddyserver/caddy/v2/caddyconfig/caddyfile"
 	"github.com/caddyserver/caddy/v2/modules/caddyhttp"
 	"go.uber.org/zap"
 )
@@ -212,4 +213,5 @@ var (
 	_ caddy.Provisioner           = (*X402SellerMiddleware)(nil)
 	_ caddy.Validator             = (*X402SellerMiddleware)(nil)
 	_ caddyhttp.MiddlewareHandler = (*X402SellerMiddleware)(nil)
+	_ caddyfile.Unmarshaler       = (*X402SellerMiddleware)(nil)
 )

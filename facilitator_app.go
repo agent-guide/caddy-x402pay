@@ -5,6 +5,8 @@ import (
 
 	"github.com/agent-guide/go-x402-facilitator/pkg/facilitator"
 	"github.com/caddyserver/caddy/v2"
+	"github.com/caddyserver/caddy/v2/caddyconfig/caddyfile"
+	"go.uber.org/zap"
 )
 
 func init() {
@@ -47,7 +49,10 @@ func (X402FacilitatorApp) CaddyModule() caddy.ModuleInfo {
 
 // Provision sets up the module.
 func (m *X402FacilitatorApp) Provision(ctx caddy.Context) error {
-	ctx.Logger(m).Info("provisioning x402 facilitator app")
+	ctx.Logger(m).Info("provisioning x402 facilitator app",
+		zap.String("private_key_set", fmt.Sprintf("%t", m.PrivateKey != "")),
+		zap.Int("chain_networks_count", len(m.ChainNetworks)),
+	)
 	return nil
 }
 
@@ -128,7 +133,8 @@ func (m *X402FacilitatorApp) initFacilitator() error {
 
 // Interface guards
 var (
-	_ caddy.Provisioner = (*X402FacilitatorApp)(nil)
-	_ caddy.Validator   = (*X402FacilitatorApp)(nil)
-	_ caddy.App         = (*X402FacilitatorApp)(nil)
+	_ caddy.Provisioner     = (*X402FacilitatorApp)(nil)
+	_ caddy.Validator       = (*X402FacilitatorApp)(nil)
+	_ caddy.App             = (*X402FacilitatorApp)(nil)
+	_ caddyfile.Unmarshaler = (*X402FacilitatorApp)(nil)
 )

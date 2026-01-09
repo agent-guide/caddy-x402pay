@@ -1,7 +1,7 @@
 {
 	"apps": {
 		"x402.facilitator": {
-			"private_key": "0x...",
+			"private_key": "...",
 			"supported_schemes": ["exact"],
 			"gas_limit": 21000,
 			"gas_price": 10,
