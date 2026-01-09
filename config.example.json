@@ -1,0 +1,87 @@
+{
+	"apps": {
+		"x402.facilitator": {
+			"private_key": "0x...",
+			"supported_schemes": ["exact"],
+			"gas_limit": 21000,
+			"gas_price": 10,
+			"chain_networks": [
+				{
+					"name": "localhost",
+					"rpc": "http://127.0.0.1:8545",
+					"id": 1337,
+					"token_address": "0xBA32c2Ee180e743cCe34CbbC86cb79278C116CEb",
+					"token_name": "MyToken",
+					"token_version": "1",
+					"token_decimals": 6,
+					"token_type": "ERC20"
+				}
+			]
+		},
+		"http": {
+			"servers": {
+				"srv0": {
+					"listen": [":8080"],
+					"routes": [
+						{
+							"match": [
+								{
+									"path": ["/api/premium-data"]
+								}
+							],
+							"handle": [
+								{
+									"handler": "x402seller",
+									"scheme": "exact",
+									"network": "localhost",
+									"resource": "premium-data-api",
+									"description": "Access to premium market data",
+									"max_amount_required": "1000000",
+									"pay_to": "0x93866dBB587db8b9f2C36570Ae083E3F9814e508"
+								},
+								{
+									"handler": "reverse_proxy",
+									"upstreams": [
+										{
+											"dial": "localhost:5002"
+										}
+									]
+								}
+							]
+						},
+						{
+							"match": [
+								{
+									"path": ["/api/protected-resource"]
+								}
+							],
+							"handle": [
+								{
+									"handler": "x402seller",
+									"scheme": "exact",
+									"network": "sepolia",
+									"resource": "protected-resource",
+									"description": "Protected API resource",
+									"max_amount_required": "500000",
+									"pay_to": "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb"
+								},
+								{
+									"handler": "static_response",
+									"status_code": 200,
+									"body": "Access granted! You have successfully paid for this resource."
+								}
+							]
+						}
+					]
+				}
+			}
+		}
+	},
+	"logging": {
+		"logs": {
+			"default": {
+				"level": "DEBUG"
+			}
+		}
+	}
+}
