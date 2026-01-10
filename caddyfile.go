@@ -10,9 +10,39 @@ import (
 )
 
 func init() {
+	httpcaddyfile.RegisterGlobalOption("chain_network", parseChainNetworkGlobal)
 	httpcaddyfile.RegisterGlobalOption("x402.facilitator", parseX402Facilitator)
 	httpcaddyfile.RegisterHandlerDirective("x402seller", parseX402Seller)
 	httpcaddyfile.RegisterHandlerDirective("x402buyer", parseX402Buyer)
+}
+
+// Global storage for chain networks parsed from Caddyfile
+// This is a simple approach to accumulate chain_network configurations
+var globalChainNetworks []ChainNetworkConfig
+
+// parseChainNetworkGlobal parses a global chain_network option.
+// Syntax: chain_network <name> { ... }
+func parseChainNetworkGlobal(d *caddyfile.Dispenser, _ any) (any, error) {
+	if !d.Next() {
+		return nil, d.Err("expected directive name")
+	}
+
+	// Get network name
+	if !d.NextArg() {
+		return nil, d.ArgErr()
+	}
+	networkName := d.Val()
+
+	networkConfig := ChainNetworkConfig{Name: networkName}
+	if err := parseChainNetwork(d, &networkConfig); err != nil {
+		return nil, err
+	}
+
+	// Append to global storage
+	globalChainNetworks = append(globalChainNetworks, networkConfig)
+
+	// Return empty config - the networks will be picked up by x402.facilitator
+	return nil, nil
 }
 
 // parseX402Facilitator parses the x402.facilitator app configuration.
@@ -20,6 +50,13 @@ func init() {
 // Returns the app configuration that will be merged into the global config.
 func parseX402Facilitator(d *caddyfile.Dispenser, _ any) (any, error) {
 	app := &X402FacilitatorApp{}
+
+	// Import global chain networks
+	if len(globalChainNetworks) > 0 {
+		app.ChainNetworks = make([]ChainNetworkConfig, len(globalChainNetworks))
+		copy(app.ChainNetworks, globalChainNetworks)
+	}
+
 	if err := app.UnmarshalCaddyfile(d); err != nil {
 		return nil, err
 	}
@@ -49,15 +86,6 @@ func parseX402Seller(h httpcaddyfile.Helper) (caddyhttp.MiddlewareHandler, error
 //	    supported_schemes exact
 //	    gas_limit 21000
 //	    gas_price 10
-//	    chain_network <name> {
-//	        rpc http://127.0.0.1:8545
-//	        id 1337
-//	        token_address 0xBA32...
-//	        token_name MyToken
-//	        token_version 1
-//	        token_decimals 6
-//	        token_type ERC20
-//	    }
 //	}
 func (m *X402FacilitatorApp) UnmarshalCaddyfile(d *caddyfile.Dispenser) error {
 	// When called from RegisterGlobalOption, the Dispenser is already positioned
@@ -110,18 +138,6 @@ func (m *X402FacilitatorApp) UnmarshalCaddyfile(d *caddyfile.Dispenser) error {
 				return d.Errf("invalid gas_price: %v", err)
 			}
 			m.GasPrice = gasPrice
-
-		case "chain_network":
-			if !d.NextArg() {
-				return d.ArgErr()
-			}
-			networkName := d.Val()
-
-			networkConfig := ChainNetworkConfig{Name: networkName}
-			if err := parseChainNetwork(d, &networkConfig); err != nil {
-				return err
-			}
-			m.ChainNetworks = append(m.ChainNetworks, networkConfig)
 
 		default:
 			return d.Errf("unknown subdirective: %s", d.Val())
@@ -257,6 +273,11 @@ func (m *X402SellerMiddleware) UnmarshalCaddyfile(d *caddyfile.Dispenser) error 
 // parseX402Buyer parses the x402buyer handler directive.
 func parseX402Buyer(h httpcaddyfile.Helper) (caddyhttp.MiddlewareHandler, error) {
 	var m X402BuyerMiddleware
+	// Import global chain networks
+	if len(globalChainNetworks) > 0 {
+		m.ChainNetworks = make([]ChainNetworkConfig, len(globalChainNetworks))
+		copy(m.ChainNetworks, globalChainNetworks)
+	}
 	err := m.UnmarshalCaddyfile(h.Dispenser)
 	return &m, err
 }

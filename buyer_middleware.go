@@ -34,6 +34,7 @@ type X402BuyerMiddleware struct {
 	// Runtime fields
 	privateKey         *ecdsa.PrivateKey
 	parsedMaxAmountPay int64
+	ChainNetworks      []ChainNetworkConfig
 	ctx                caddy.Context
 }
 
@@ -76,6 +77,7 @@ func (m *X402BuyerMiddleware) Provision(ctx caddy.Context) error {
 	ctx.Logger(m).Info("provisioning x402 buyer middleware",
 		zap.Int("max_retries", m.MaxRetries),
 		zap.Int64("max_amount_pay", m.parsedMaxAmountPay),
+		zap.Int("chain_networks_count", len(m.ChainNetworks)),
 		zap.String("buyer_private_key_set", fmt.Sprintf("%t", m.PrivateKeyHex != "")),
 	)
 
@@ -209,6 +211,19 @@ func (m *X402BuyerMiddleware) writeError(w http.ResponseWriter, status int, errT
 
 // createPaymentPayload creates a payment payload using the configured private key.
 func (m *X402BuyerMiddleware) createPaymentPayload(requirements *types.PaymentRequirements) (*types.PaymentPayload, error) {
+	// Find chain network configuration by network name
+	var chainNetwork *ChainNetworkConfig
+	for i := range m.ChainNetworks {
+		if m.ChainNetworks[i].Name == requirements.Network {
+			chainNetwork = &m.ChainNetworks[i]
+			break
+		}
+	}
+
+	if chainNetwork == nil {
+		return nil, fmt.Errorf("chain network %s not found in configuration", requirements.Network)
+	}
+
 	// Generate payment payload
 	var validDuration int64 = 300
 	now := time.Now().Unix()
@@ -227,7 +242,7 @@ func (m *X402BuyerMiddleware) createPaymentPayload(requirements *types.PaymentRe
 		m.privateKey,
 		validAfter,
 		validBefore,
-		uint64(1337),
+		chainNetwork.ID,
 		nonce,
 	)
 }
