@@ -12,6 +12,7 @@ import (
 func init() {
 	httpcaddyfile.RegisterGlobalOption("x402.facilitator", parseX402Facilitator)
 	httpcaddyfile.RegisterHandlerDirective("x402seller", parseX402Seller)
+	httpcaddyfile.RegisterHandlerDirective("x402buyer", parseX402Buyer)
 }
 
 // parseX402Facilitator parses the x402.facilitator app configuration.
@@ -244,6 +245,58 @@ func (m *X402SellerMiddleware) UnmarshalCaddyfile(d *caddyfile.Dispenser) error 
 				return d.ArgErr()
 			}
 			m.PayTo = d.Val()
+
+		default:
+			return d.Errf("unknown subdirective: %s", d.Val())
+		}
+	}
+
+	return nil
+}
+
+// parseX402Buyer parses the x402buyer handler directive.
+func parseX402Buyer(h httpcaddyfile.Helper) (caddyhttp.MiddlewareHandler, error) {
+	var m X402BuyerMiddleware
+	err := m.UnmarshalCaddyfile(h.Dispenser)
+	return &m, err
+}
+
+// UnmarshalCaddyfile implements caddyfile.Unmarshaler for X402BuyerMiddleware. Syntax:
+//
+//	x402buyer {
+//	    private_key {$X402_BUYER_PRIVATE_KEY}
+//	    max_amount_pay 2000000
+//	    max_retries 1
+//	}
+func (m *X402BuyerMiddleware) UnmarshalCaddyfile(d *caddyfile.Dispenser) error {
+	d.Next() // consume directive name
+	if d.NextArg() {
+		return d.ArgErr()
+	}
+
+	for d.NextBlock(0) {
+		switch d.Val() {
+		case "private_key":
+			if !d.NextArg() {
+				return d.ArgErr()
+			}
+			m.PrivateKeyHex = d.Val()
+
+		case "max_amount_pay":
+			if !d.NextArg() {
+				return d.ArgErr()
+			}
+			m.MaxAmountPay = d.Val()
+
+		case "max_retries":
+			if !d.NextArg() {
+				return d.ArgErr()
+			}
+			var maxRetries int
+			if _, err := fmt.Sscanf(d.Val(), "%d", &maxRetries); err != nil {
+				return d.Errf("invalid max_retries: %v", err)
+			}
+			m.MaxRetries = maxRetries
 
 		default:
 			return d.Errf("unknown subdirective: %s", d.Val())

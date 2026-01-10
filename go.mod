@@ -3,7 +3,7 @@ module github.com/agent-guide/caddy-x402pay
 go 1.25.5
 
 require (
-	github.com/agent-guide/go-x402-facilitator v0.0.2
+	github.com/agent-guide/go-x402-facilitator v0.0.3
 	github.com/caddyserver/caddy/v2 v2.10.2
 	go.uber.org/zap v1.27.0
 )

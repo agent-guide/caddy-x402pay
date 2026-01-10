@@ -65,8 +65,16 @@
 		respond "Access granted! You have successfully paid for this resource." 200
 	}
 
-	# Route 3: Public endpoint (no payment required)
-	route /api/public {
-		respond "This endpoint is free to access!"
+	# Route 3: Automatically complete the payment for X402
+	route /api/auto-pay-premium-data {
+		x402buyer {
+			private_key {$X402_BUYER_PRIVATE_KEY}
+			max_amount_pay 2000000
+		}
+
+		# Forward to the backend service that may require payment
+		reverse_proxy localhost:8080 {
+			rewrite /api/premium-data
+		}
 	}
 }
