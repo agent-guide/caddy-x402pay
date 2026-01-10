@@ -1,22 +1,22 @@
 {
 	"apps": {
+		"chain_networks": [
+			{
+				"name": "localhost",
+				"rpc": "http://127.0.0.1:8545",
+				"id": 1337,
+				"token_address": "0xBA32c2Ee180e743cCe34CbbC86cb79278C116CEb",
+				"token_name": "MyToken",
+				"token_version": "1",
+				"token_decimals": 6,
+				"token_type": "ERC20"
+			}
+		],
 		"x402.facilitator": {
 			"private_key": "...",
 			"supported_schemes": ["exact"],
 			"gas_limit": 21000,
-			"gas_price": 10,
-			"chain_networks": [
-				{
-					"name": "localhost",
-					"rpc": "http://127.0.0.1:8545",
-					"id": 1337,
-					"token_address": "0xBA32c2Ee180e743cCe34CbbC86cb79278C116CEb",
-					"token_name": "MyToken",
-					"token_version": "1",
-					"token_decimals": 6,
-					"token_type": "ERC20"
-				}
-			]
+			"gas_price": 10
 		},
 		"http": {
 			"servers": {
