@@ -92,13 +92,31 @@ func (m *X402BuyerMiddleware) Validate() error {
 	return nil
 }
 
+func (m *X402BuyerMiddleware) getRequestBodyByLimit(w http.ResponseWriter, r *http.Request) ([]byte, error) {
+	maxBytes := int64(1024 * 8)
+	r.Body = http.MaxBytesReader(w, r.Body, maxBytes)
+
+	buf, err := io.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, "Request body too large", http.StatusRequestEntityTooLarge)
+		return buf, err
+	}
+	return bytes.Clone(buf), nil
+}
+
 // ServeHTTP implements the caddyhttp.MiddlewareHandler interface.
 func (m *X402BuyerMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request, next caddyhttp.Handler) error {
+	originalBodyBytes, err := m.getRequestBodyByLimit(w, r)
+	if err != nil {
+		return err
+	}
+	r.Body = io.NopCloser(bytes.NewReader(originalBodyBytes))
+
 	// Use response capture to intercept the response
 	rec := &responseCapture{ResponseWriter: w, statusCode: http.StatusOK}
 
 	// Call next handler
-	err := next.ServeHTTP(rec, r)
+	err = next.ServeHTTP(rec, r)
 	if err != nil {
 		return m.flushResponse(rec, w)
 	}
@@ -160,42 +178,15 @@ func (m *X402BuyerMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request, 
 			fmt.Sprintf("Failed to serialize payment: %s", err.Error()))
 	}
 
-	m.ctx.Logger(m).Info("payment payload created, retrying request with payment")
-
-	// Create a new request with X-Payment header
-	var bodyReader io.Reader
-	if r.Body != nil {
-		bodyBytes, err := io.ReadAll(r.Body)
-		if err == nil {
-			bodyReader = bytes.NewReader(bodyBytes)
-		}
-		// Restore original body for retry
-		r.Body = io.NopCloser(bytes.NewReader(bodyBytes))
-	}
-
-	retryReq, err := http.NewRequestWithContext(
-		r.Context(),
-		r.Method,
-		r.URL.String(),
-		bodyReader,
+	m.ctx.Logger(m).Info("payment payload created, retrying request with payment",
+		zap.ByteString("originalBodyBytes", originalBodyBytes),
+		zap.ByteString("X-Payment", paymentJSON),
 	)
-	if err != nil {
-		m.ctx.Logger(m).Error("failed to create retry request",
-			zap.Error(err),
-		)
-		return m.writeError(w, http.StatusInternalServerError, "retry_request_failed",
-			fmt.Sprintf("Failed to create retry request: %s", err.Error()))
-	}
 
-	// Copy headers
-	for k, v := range r.Header {
-		retryReq.Header[k] = v
-	}
+	r.Body = io.NopCloser(bytes.NewReader(originalBodyBytes))
+	r.Header.Set("X-Payment", string(paymentJSON))
 
-	// Add X-Payment header
-	retryReq.Header.Set("X-Payment", string(paymentJSON))
-
-	return next.ServeHTTP(w, retryReq)
+	return next.ServeHTTP(w, r)
 }
 
 // writeError writes an error response to the writer.

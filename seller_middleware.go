@@ -90,7 +90,7 @@ func (m *X402SellerMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request,
 	paymentHeader := r.Header.Get("X-Payment")
 	if paymentHeader == "" {
 		// No payment provided, return 402 Payment Required
-		if err := m.returnPaymentRequired(w, r); err != nil {
+		if err := m.returnPaymentRequired(w); err != nil {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusInternalServerError)
 			json.NewEncoder(w).Encode(types.ErrorResponse{
@@ -103,7 +103,7 @@ func (m *X402SellerMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request,
 	}
 
 	// Parse and validate payment
-	if err := m.processPayment(r, paymentHeader); err != nil {
+	if err := m.processPayment(paymentHeader); err != nil {
 		m.ctx.Logger(m).Error("payment processing failed",
 			zap.Error(err),
 		)
@@ -124,7 +124,7 @@ func (m *X402SellerMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request,
 }
 
 // returnPaymentRequired returns a 402 Payment Required response with payment requirements.
-func (m *X402SellerMiddleware) returnPaymentRequired(w http.ResponseWriter, r *http.Request) error {
+func (m *X402SellerMiddleware) returnPaymentRequired(w http.ResponseWriter) error {
 	facilitatorInstance := m.facilitatorApp.GetFacilitator()
 	if facilitatorInstance == nil {
 		return fmt.Errorf("facilitator is not initialized")
@@ -148,7 +148,7 @@ func (m *X402SellerMiddleware) returnPaymentRequired(w http.ResponseWriter, r *h
 }
 
 // processPayment processes the X-Payment header and verifies/settles the payment.
-func (m *X402SellerMiddleware) processPayment(r *http.Request, paymentHeader string) error {
+func (m *X402SellerMiddleware) processPayment(paymentHeader string) error {
 	// Get facilitator instance
 	facilitatorInstance := m.facilitatorApp.GetFacilitator()
 	if facilitatorInstance == nil {
@@ -179,8 +179,7 @@ func (m *X402SellerMiddleware) processPayment(r *http.Request, paymentHeader str
 	}
 
 	// Verify payment
-	ctx := r.Context()
-	verifyResp, err := facilitatorInstance.Verify(ctx, &verifyReq)
+	verifyResp, err := facilitatorInstance.Verify(m.ctx, &verifyReq)
 	if err != nil {
 		return fmt.Errorf("payment verification failed: %w", err)
 	}
@@ -190,7 +189,7 @@ func (m *X402SellerMiddleware) processPayment(r *http.Request, paymentHeader str
 	}
 
 	// Settle payment
-	settleResp, err := facilitatorInstance.Settle(ctx, &verifyReq)
+	settleResp, err := facilitatorInstance.Settle(m.ctx, &verifyReq)
 	if err != nil {
 		return fmt.Errorf("payment settlement failed: %w", err)
 	}
