@@ -18,7 +18,6 @@
 	# X402 Facilitator App Configuration
 	# Provides the PaymentFacilitator instance for payment verification and settlement
 	x402.facilitator {
-		# export X402_FACILITATOR_PRIVATE_KEY=ac0978bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
 		private_key {$X402_FACILITATOR_PRIVATE_KEY}
 		supported_schemes exact
 		gas_limit 21000

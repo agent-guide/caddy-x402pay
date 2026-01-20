@@ -51,8 +51,6 @@ github.com/StackExchange/wmi v1.2.1 h1:VIkavFPXSjcnS+O8yTq7NI32k0R5Aj+v39y29VYDO
 github.com/StackExchange/wmi v1.2.1/go.mod h1:rcmrprowKIVzvc+NUiLncP2uuArMWLCbu9SBzvHz7e8=
 github.com/VictoriaMetrics/fastcache v1.12.1 h1:i0mICQuojGDL3KblA7wUNlY5lOK6a4bwt3uRKnkZU40=
 github.com/VictoriaMetrics/fastcache v1.12.1/go.mod h1:tX04vaqcNoQeGLD+ra5pU5sWkuxnzWhEzLwhP9w653o=
-github.com/agent-guide/go-x402-facilitator v0.0.2 h1:YfpdBVSl59k3GALj/lL5lOKTO5zZbPKWIaLPywFe/SA=
-github.com/agent-guide/go-x402-facilitator v0.0.2/go.mod h1:ocaOAVRvAvJmK6O0g1ggT2Oxq/7NEcXyNyanlY6XjPI=
 github.com/agent-guide/go-x402-facilitator v0.0.3 h1:MBdMVZkP3HAva7YkY6QCcWqn6585YPb+aCD3no5/DJ8=
 github.com/agent-guide/go-x402-facilitator v0.0.3/go.mod h1:ocaOAVRvAvJmK6O0g1ggT2Oxq/7NEcXyNyanlY6XjPI=
 github.com/alecthomas/assert/v2 v2.11.0 h1:2Q9r3ki8+JYXvGsDyBXwH3LcJ+WK5D0gc5E8vS6K3D0=

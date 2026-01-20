@@ -5,6 +5,7 @@ go 1.25.5
 require (
 	github.com/agent-guide/go-x402-facilitator v0.0.3
 	github.com/caddyserver/caddy/v2 v2.10.2
+	github.com/ethereum/go-ethereum v1.13.5
 	go.uber.org/zap v1.27.0
 )
 
@@ -51,7 +52,6 @@ require (
 	github.com/dlclark/regexp2 v1.11.5 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/ethereum/c-kzg-4844 v0.4.0 // indirect
-	github.com/ethereum/go-ethereum v1.13.5 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/francoispqt/gojay v1.2.13 // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
